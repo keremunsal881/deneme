@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Stars: Sirius ve Tüm Savaşçılar</title>
+    <style>
+        :root {
+            --sirius-gold: #FFD700;
+            --bg-dark: #0a0a0a;
+            --card-bg: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Arial Black', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            margin: 0;
+            text-align: center;
+        }
+
+        header {
+            background: linear-gradient(180deg, #222 0%, #000 100%);
+            padding: 40px;
+            border-bottom: 3px solid var(--sirius-gold);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .brawler-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 15px;
+            border: 2px solid #333;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .brawler-card:hover {
+            transform: scale(1.05);
+            border-color: var(--sirius-gold);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .brawler-card img {
+            width: 100%;
+            border-radius: 15px;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+        }
+
+        .name { margin-top: 10px; font-size: 1em; text-transform: uppercase; color: #fff; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: #222;
+            padding: 30px;
+            border-radius: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 3px solid var(--sirius-gold);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 35px;
+            cursor: pointer;
+            color: #ff4444;
+        }
+
+        #modalDesc { line-height: 1.6; color: #ddd; font-family: sans-serif; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>BRAWL STARS ARŞİVİ</h1>
+</header>
+
+<div class="container" id="brawlerContainer"></div>
+
+<div id="brawlerModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img id="modalImg" src="" style="width:180px; border-radius:20px; margin-bottom:20px; border:2px solid var(--sirius-gold);">
+        <h2 id="modalName" style="color:var(--sirius-gold); margin-bottom:10px;"></h2>
+        <p id="modalDesc"></p>
+    </div>
+</div>
+
+<script>
+    // TÜM ÖZEL AÇIKLAMALARIN (SIRIUS'TAN NANI'YE)
+    const descriptions = {
+        "Sirius": "Sirius karakteri süper özelliğiyle gölge çıkartır normal saldırısı ise hem havadan hem karadan kullanılabilir.",
+        "Glowbert": "Glowbert normal saldırısını yaptığında düşmanına bir ışın atar bu ışın düşman bir duvarın arkasına geçmediği sürece hasar vermeye devam eder. Süper özelliği onu ileri atar ve can verir.",
+        "Gıgı": "Gıgı düşmanlarına dönerek hasar verir. Süper saldırısıyla herhangi bir yere ışınlanabilir.",
+        "Pierce": "Pierce bir keskin nişancı karakteridir. Rakiplerine bir su fırlatır. Süper özelliği bir can simidi oluşturur bu alandaki düşmanlar hasar alır.",
+        "Zıggy": "Zıggy rakipleri duvarların arkasından vurabilir. Süper özelliği bir alan oluşturur bu alandaki düşmanlar hasar alır.",
+        "Mına": "Mına temel saldırısını yaptığı zaman ileri atılır. Süper özelliği ise düşmanları havaya fırlatır.",
+        "Trunk": "Trunk düşmanlarına dönerek hasar verir. Süper özelliğini kullandığında ileri atılır.",
+        "Alli": "Alli rakiplerine atılarak hasar verir. Süper özelliği onu görünmez yapar.",
+        "Kaze": "Kaze rakiplerine atılarak hasar verir. Ninja modunda ise rakiplerine bıçak fırlatır. Süper özelliği bir alan oluşturur bu alandaki savaşçıların görüşünü kısıtlar.",
+        "Jae-yong": "Jae-yong rakiplerine bir şişe fırlatır. Süper özelliğiyle ise kendine can verir.",
+        "Fınx": "Fınx rakiplerine aynı anda 3 mermi fırlatır 1 tanesi fazla hasar vururken diğer 2 mermi daha az vurur. Süper özelliğiyle üstüne gelen mermileri yavaşlatır.",
+        "Lumi": "Lumi rakiplerine bir topuz fırlatır tekrar tıkladığında ise sana geri döner. Süper özelliği rakiplerini sersemletir.",
+        "Ollie": "Ollie normal saldırısıyla rakiplere ses dalgaları gönderir süper özelliğiyle bir alan oluşturur ve bu alan bir süre içinde patlar.",
+        "Meeple": "Meeple rakiplerine bir piyon fırlatır ve süper özelliğiyle duvarların arkasından saldırı yapılabilmesini sağlar.",
+        "Juju": "Juju rakiplerine bir toprak parçası veya bir bitki atar. Süper özelliğiyle Griss Griss'i çağırır ve Griss Griss düşmanlara saldırır.",
+        "Shade": "Shade Suda yürüyebilir ve rakiplerine bir yarım daire boyunca hasar verir. Süper özelliğiyle duvarların içinden geçer ve hızlanır.",
+        "Kenji": "Kenji ilk saldırısında ileri atılır 2. saldırısında ise katanasını savurur. Süper özelliğiyle x şeklinde bir alana hasar verir.",
+        "Moe": "Moe rakiplerine bir toprak fırlatır ve bu toprak parçalara ayrılıp hasar verir. Süper özelliğiyle bir araca girer ve hızlanır aynı zamanda rakiplere dönerek vurur.",
+        "Clancy": "Clancy rakiplerine toplar atar ve hasar verdikçe bir üst düzeye geçer ve saldırısındaki toplar artar. Süper özelliğiyle 3 farklı yere bir dizi top fırlatır.",
+        "Berry": "Berry kendini iyileştirebilen bir dondurma külahı fırlatır. Süper özelliğiyle dönerek arkasında dondurma bırakır.",
+        "Lily": "Lily rakiplerine bir hançer fırlatır. Süper özelliği onu ışınlar.",
+        "Draco": "Draco rakiplerine kritik hasar verir. Süper özelliği kullanıldığında bir dinozora dönüşür ve ateş saçar.",
+        "Angelo": "Angelo yayını gererek zaman geçtikçe daha güçlü bir ok atar. Süper özelliği bir alan oluşturur ve bu alandan atılan oklar rakibi zehirler.",
+        "Melodie": "Melodie rakiplerine bir nota fırlatır ve zaman içinde etrafında etrafa hasar veren notalar dönmeye başlar. Süper özelliğiyle ise ileri atılır.",
+        "Larry & Lawrie": "Larry rakiplere bir bilet makinesi fırlatır. Süper özelliğiyle Lawrie'yi çağırır ve Lawrie de ona yardım eder.",
+        "Kit": "Kit rakiplerine pençe atar. Süper özelliğiyle rakiplerine tutunup bir süre sersemletir.",
+        "Mico": "Mico rakiplerinin kafasına atlar. Süper saldırısını kullandığında bir alan oluşturur ve o alandaki herkese hasar verir.",
+        "Charlie": "Charlie rakiplerine örümcek ağı atar. Süper özelliği rakibi bir kozaya alır.",
+        "Chuck": "Chuck rakiplerine bir duman atar. Süper özelliğiyle bir tren yolculuğu yapar.",
+        "Pearl": "Pearl rakiplerine kurabiye atar. Süper özelliğiyle bir patlama yapar ve rakiplere hasar verir.",
+        "Doug": "Doug bir patlama oluşturur ve rakiplere hasar verir. Süper özelliği onun yeniden doğmasını sağlar.",
+        "Cordelius": "Cordelius rakiplerine mantar ilacı sıkar. Süper özelliği bir rakibini Rüya alemine alır.",
+        "Hank": "Hank bir baloncuk oluşturur ve rakiplere hasar verir süper özelliğiyle 8 tane torpido ateşler.",
+        "Maisie": "Maisie rakiplerine bir hava topu atar bu hava topu zamanla hızlanır. Süper özelliği bir hava patlaması yapar.",
+        "Willow": "Willow rakiplerine zehir atar ve süper özelliğiyle rakiplerini ele geçirir.",
+        "R-T": "R-T rakiplerine bir ışın fırlatır. Süper özelliğiyle ikiye bölünür ve bir daire içine hasar verir.",
+        "Mandy": "Mandy rakiplerine şeker demeti fırlatır. Süper özelliğiyle bir şeker ışını yapar bu ışın duvarlardan geçer ve tüm haritayı geçer.",
+        "Gray": "Gray rakiplerine bir ışın fırlatır. Süper özelliği ile iki yerde delik açar ve bu delikler sayesinde ışınlanabilir.",
+        "Chester": "Chester rakiplerine her vuruşta bir tane artacak şekilde şeker gönderir. Süper özelliğiyle çeşit çeşit yetenekler kullanabilir.",
+        "Buster": "Buster rakiplerine bir film rulosu atar. Süper özelliği saldırıları yansıtan bir set çeker.",
+        "Gus": "Gus rakiplerine bir balon fırlatır. Süper özelliğiyle bir köpek balonu fırlatır ve kalkan kazanır.",
+        "Sam": "Sam rakiplerine pençeler. Süper özelliğiyle pençesini fırlatır.",
+        "Otis": "Otis rakiplerine boya atar. Süper saldırısı rakiplerinin mermi atmasını engeller.",
+        "Bonnie": "Bonnie topunun içinde rakiplerine gülle fırlatır. Süper özelliği basıldığında toptan atlar.",
+        "Janet": "Janet rakiplerine menzili uzayan bir parıltı gönderir. Süper özelliği onu havaya uçurur.",
+        "Eve": "Eve rakiplerine yumurta fırlatır ve su üstünde ilerleyebilir. Süper özelliği larva bırakır.",
+        "Fang": "Fang rakiplerine tekme atar. Süper saldırısıyla rakiplerine seri bir tekme atıp seker.",
+        "Lola": "Lola rakiplerine yıldız fırlatır. Süper özelliğiyle kendi kopyasını çıkartır.",
+        "Meg": "Meg bir robotun içinde başlar. Robot patladığında içinden çıkar.",
+        "Ash": "Ash rakiplerine süpürgeyle vurur. Süper özelliği minik arkadaşlarını çağırır.",
+        "Griff": "Griff para fırlatır. Süper özelliğiyle geri dönen kartlar fırlatır.",
+        "Buzz": "Buzz rakiplerine yarım daire şeklinde saldırır. Süper özelliğiyle rakiplerine sörf tahtası atar ve onları sersemletir.",
+        "Grom": "Grom artı şeklinde bölünen bir balon fırlatır. Süper özelliğiyle daha büyük bir balon atar.",
+        "Squeak": "Squeak yapışan bir sıvı atar. Süper özelliğiyle parçalara ayrılan bir sıvı atar.",
+        "Belle": "Belle elektrik dalgası atar. Süper özelliğiyle bir rakibi işaretler.",
+        "Stu": "Stu parlayan ışın gönderir. Süper özelliğiyle ileri atılır ve yerleri yakar.",
+        "Ruffs": "Ruffs seken mermiler atar. Süper özelliği güç veren bir kit düşürür.",
+        "Edgar": "Edgar atkısıyla yumruk atar. Süper özelliğiyle rakiplerine atlar.",
+        "Byron": "Byron zehirler veya takım arkadaşına can verir. Süper özelliği iksir şişesi fırlatır.",
+        "Lou": "Lou rakiplerini dondurur. Süper özelliği kaygan bir alan oluşturur.",
+        "Amber": "Amber ateş fırlatır. Süper özelliği yanan bir sıvı fırlatır.",
+        "Colette": "Colette kalp fırlatır. Süper özelliğiyle rakiplerini sürükleyip geri döner.",
+        "Surge": "Surge meyve suyu fırlatır. Süper özelliğiyle seviye atlar.",
+        "Sprout": "Sprout bitki fırlatır. Süper özelliği bitki duvarı oluşturur.",
+        "Nani": "Nani bölünen ışın fırlatır. Süper özelliği bir araçla rakipleri patlatır."
+    };
+
+    async function loadBrawlers() {
+        try {
+            const response = await fetch('https://api.brawlapi.com/v1/brawlers');
+            const data = await response.json();
+            const container = document.getElementById('brawlerContainer');
+
+            // 1. SIRIUS (Senin Görselinle)
+            addCard({ name: "Sirius", imageUrl: "sirius.jpeg" }, container);
+
+            // 2. DİĞERLERİ (Buzz Lightyear KESİN SİLİNDİ)
+            data.list.forEach(b => {
+                const name = b.name.toLowerCase();
+                // "buzz lightyear" ismini gördüğü an bu karakteri geçer, listeye eklemez.
+                if (name !== "buzz lightyear") {
+                    addCard(b, container);
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function addCard(b, container) {
+        const card = document.createElement('div');
+        card.className = 'brawler-card';
+        if(b.name === "Sirius") card.style.borderColor = "var(--sirius-gold)";
+        
+        card.onclick = () => {
+            const desc = descriptions[b.name] || b.name + " savaş alanına hükmetmek için burada!";
+            showDetails(b.name, desc, b.imageUrl);
+        };
+
+        card.innerHTML = `<img src="${b.imageUrl}" onerror="this.src='https://placehold.co/200?text=Resim+Yok'"><div class="name">${b.name}</div>`;
+        container.appendChild(card);
+    }
+
+    function showDetails(name, desc, img) {
+        document.getElementById('modalName').innerText = name;
+        document.getElementById('modalDesc').innerText = desc;
+        document.getElementById('modalImg').src = img;
+        document.getElementById('brawlerModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('brawlerModal').style.display = 'none'; }
+    window.onclick = (e) => { if(e.target.className == 'modal') closeModal(); }
+
+    loadBrawlers();
+</script>
+</body>
+</html>

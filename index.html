@@ -1,6 +1,160 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="tr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Stars Arşivi</title>
+    <style>
+        :root { --gold: #FFD700; --bg: #0a0a0a; }
+        body { font-family: 'Arial Black', sans-serif; background: var(--bg); color: white; margin: 0; text-align: center; }
+        header { padding: 30px; border-bottom: 3px solid var(--gold); background: #111; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: #1e1e1e; border-radius: 15px; padding: 10px; border: 2px solid #333; cursor: pointer; }
+        .card:hover { border-color: var(--gold); transform: scale(1.03); transition: 0.2s; }
+        .card img { width: 100%; border-radius: 10px; aspect-ratio: 1/1; object-fit: cover; }
+        .name { margin-top: 8px; font-size: 0.8em; color: #fff; text-transform: uppercase; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a1a; padding: 25px; border-radius: 20px; max-width: 400px; width: 80%; border: 3px solid var(--gold); position: relative; }
+        .close { position: absolute; top: 10px; right: 15px; font-size: 25px; cursor: pointer; color: red; }
+        .modal-img { width: 120px; height: 120px; border-radius: 15px; border: 2px solid var(--gold); margin-bottom: 15px; }
+        .desc-text { font-family: sans-serif; line-height: 1.5; font-size: 1.1em; color: #ddd; text-align: left; }
+    </style>
+</head>
+<body>
+
+<header><h1>BRAWL STARS GALERİSİ</h1></header>
+<div class="container" id="box"></div>
+
+<div id="m" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeM()">&times;</span>
+        <img id="mImg" class="modal-img" src="">
+        <h2 id="mName" style="color:var(--gold); margin: 0 0 15px 0;"></h2>
+        <div id="mDesc" class="desc-text"></div>
+    </div>
+</div>
+
+<script>
+    // AÇIKLAMALAR (İsimleri küçük harfe çevirerek eşleştirme yapacağız)
+    const rawData = {
+        "sirius": "Sirius karakteri süper özelliğiyle gölge çıkartır normal saldırısı ise hem havadan hem karadan kullanılabilir.",
+        "glowbert": "Glowbert normal saldırısını yaptığında düşmanına bir ışın atar bu ışın düşman bir duvarın arkasına geçmediği sürece hasar vermeye devam eder. Süper özelliği onu ileri atar ve can verir.",
+        "gıgı": "Gıgı düşmanlarına dönerek hasar verir. Süper saldırısıyla herhangi bir yere ışınlanabilir.",
+        "pierce": "Pierce bir keskin nişancı karakteridir. Rakiplerine bir su fırlatır. Süper özelliği bir can simidi oluşturur bu alandaki düşmanlar hasar alır.",
+        "zıggy": "Zıggy rakipleri duvarların arkasından vurabilir. Süper özelliği bir alan oluşturur bu alandaki düşmanlar hasar alır.",
+        "mına": "Mına temel saldırısını yaptığı zaman ileri atılır. Süper özelliği ise düşmanları havaya fırlatır.",
+        "trunk": "Trunk düşmanlarına dönerek hasar verir. Süper özelliğini kullandığında ileri atılır.",
+        "allı": "Alli rakiplerine atılarak hasar verir. Süper özelliği onu görünmez yapar.",
+        "kaze": "Kaze rakiplerine atılarak hasar verir. Ninja modunda ise rakiplerine bıçak fırlatır. Süper özelliği bir alan oluşturur bu alandaki savaşçıların görüşünü kısıtlar.",
+        "jae-yong": "Jae-yong rakiplerine bir şişe fırlatır. Süper özelliğiyle ise kendine can verir.",
+        "fınx": "Fınx rakiplerine aynı anda 3 mermi fırlatır 1 tanesi fazla hasar vururken diğer 2 mermi daha az vurur. Süper özelliğiyle üstüne gelen mermileri yavaşlatır.",
+        "lumı": "Lumi rakiplerine bir topuz fırlatır tekrar tıkladığında ise sana geri döner. Süper özelliği rakiplerini sersemletir.",
+        "ollıe": "Ollie normal saldırısıyla rakiplere ses dalgaları gönderir süper özelliğiyle bir alan oluşturur ve bu alan bir süre içinde patlar.",
+        "meeple": "Meeple rakiplerine bir piyon fırlatır ve süper özelliğiyle duvarların arkasından saldırı yapılabilmesini sağlar.",
+        "juju": "Juju rakiplerine bir toprak parçası veya bir bitki atar. Süper özelliğiyle Griss Griss'i çağırır ve Griss Griss düşmanlara saldırır.",
+        "shade": "Shade Suda yürüyebilir ve rakiplerine bir yarım daire boyunca hasar verir. Süper özelliğiyle duvarların içinden geçer ve hızlanır.",
+        "kenjı": "Kenji ilk saldırısında ileri atılır 2. saldırısında ise katanasını savurur. Süper özelliğiyle x şeklinde bir alana hasar verir.",
+        "moe": "Moe rakiplerine bir toprak fırlatır ve bu toprak parçalara ayrılıp hasar verir. Süper özelliğiyle bir araca girer ve hızlanır aynı zamanda rakiplere dönerek vurur.",
+        "clancy": "Clancy rakiplerine toplar atar ve hasar verdikçe bir üst düzeye geçer ve saldırısındaki toplar artar. Süper özelliğiyle 3 farklı yere bir dizi top fırlatır.",
+        "berry": "Berry kendini iyileştirebilen bir dondurma külahı fırlatır. Süper özelliğiyle dönerek arkasında dondurma bırakır.",
+        "lıly": "Lily rakiplerine bir hançer fırlatır. Süper özelliği onu ışınlar.",
+        "draco": "Draco rakiplerine kritik hasar verir. Süper özelliği kullanıldığında bir dinozora dönüşür ve ateş saçar.",
+        "angelo": "Angelo yayını gererek zaman geçtikçe daha güçlü bir ok atar. Süper özelliği bir alan oluşturur ve bu alandan atılan oklar rakibi zehirler.",
+        "melodıe": "Melodie rakiplerine bir nota fırlatır ve zaman içinde etrafında etrafa hasar veren notalar dönmeye başlar. Süper özelliğiyle ise ileri atılır.",
+        "larry&lawrıe": "Larry rakiplere bir bilet makinesi fırlatır. Süper özelliğiyle Lawrie'yi çağırır ve Lawrie de ona yardım eder.",
+        "kıt": "Kit rakiplerine pençe atar. Süper özelliğiyle rakiplerine tutunup bir süre sersemletir.",
+        "mıco": "Mico rakiplerinin kafasına atlar. Süper saldırısını kullandığında bir alan oluşturur ve o alandaki herkese hasar verir.",
+        "charlıe": "Charlie rakiplerine örümcek ağı atar. Süper özelliği rakibi bir kozaya alır.",
+        "chuck": "Chuck rakiplerine bir duman atar. Süper özelliğiyle bir tren yolculuğu yapar.",
+        "pearl": "Pearl rakiplerine kurabiye atar. Süper özelliğiyle bir patlama yapar ve rakiplere hasar verir.",
+        "doug": "Doug bir patlama oluşturur ve rakiplere hasar verir. Süper özelliği onun yeniden doğmasını sağlar.",
+        "cordelıus": "Cordelius rakiplerine mantar ilacı sıkar. Süper özelliği bir rakibini Rüya alemine alır.",
+        "hank": "Hank bir baloncuk oluşturur ve rakiplerine hasar verir süper özelliğiyle 8 tane torpido ateşler.",
+        "maısıe": "Maisie rakiplerine bir hava topu atar bu hava topu zamanla hızlanır. Süper özelliği bir hava patlaması yapar.",
+        "wıllow": "Willow rakiplerine zehir atar ve süper özelliğiyle rakiplerini ele geçirir.",
+        "r-t": "R-T rakiplerine bir ışın fırlatır. Süper özelliğiyle ikiye bölünür ve bir daire içine hasar verir.",
+        "mandy": "Mandy rakiplerine şeker demeti fırlatır. Süper özelliğiyle bir şeker ışını yapar bu ışın duvarlardan geçer ve tüm haritayı geçer.",
+        "gray": "Gray rakiplerine bir ışın fırlatır. Süper özelliği ile iki yerde delik açar ve bu delikler sayesinde ışınlanabilir.",
+        "chester": "Chester rakiplerine her vuruşta bir tane artcak şekilde şeker gönderir. Süper özelliğiyle çeşit çeşit yetenekler kullanabilir.",
+        "buster": "Buster rakiplerine bir film rulosu atar. Süper özelliği saldırıları yansıtan bir set çeker.",
+        "gus": "Gus rakiplerine bir balon fırlatır. Süper özelliğiyle bir köpek balonu fırlatır ve kalkan kazanır.",
+        "sam": "Sam rakiplerine pençeler. Süper özelliğiyle pençesini fırlatır.",
+        "otıs": "Otis rakiplerine boya atar. Süper saldırısı rakiplerinin mermi atmasını engeller.",
+        "bonnıe": "Bonnie topunun içinde rakiplerine gülle fırlatır. Süper özelliği basıldığında toptan atlar.",
+        "janet": "Janet rakiplerine menzili uzayan bir parıltı gönderir. Süper özelliği onu havaya uçurur.",
+        "eve": "Eve rakiplerine yumurta fırlatır ve su üstünde ilerleyebilir. Süper özelliği larva bırakır.",
+        "fang": "Fang rakiplerine tekme atar. Süper saldırısıyla rakiplerine seri bir tekme atıp seker.",
+        "lola": "Lola rakiplerine yıldız fırlatır. Süper özelliğiyle kendi kopyasını çıkartır.",
+        "meg": "Meg bir robotun içinde başlar. Robot patladığında içinden çıkar.",
+        "ash": "Ash rakiplerine süpürgeyle vurur. Süper özelliği minik arkadaşlarını çağırır.",
+        "grıff": "Griff para fırlatır. Süper özelliğiyle geri dönen kartlar fırlatır.",
+        "buzz": "Buzz rakiplerine yarım daire şeklinde saldırır. Süper özelliğiyle rakiplerine sörf tahtası atar ve onları sersemletir.",
+        "grom": "Grom artı şeklinde bölünen bir balon fırlatır. Süper özelliğiyle daha büyük bir balon atar.",
+        "squeak": "Squeak yapışan bir sıvı atar. Süper özelliğiyle parçalara ayrılan bir sıvı atar.",
+        "belle": "Belle elektrik dalgası atar. Süper özelliğiyle bir rakibi işaretler.",
+        "stu": "Stu parlayan ışın gönderir. Süper özelliğiyle ileri atılır ve yerleri yakar.",
+        "ruffs": "Ruffs seken mermiler atar. Süper özelliği güç veren bir kit düşürür.",
+        "edgar": "Edgar atkısıyla yumruk atar. Süper özelliğiyle rakiplerine atlar.",
+        "byron": "Byron zehirler veya takım arkadaşına can verir. Süper özelliği iksir şişesi fırlatır.",
+        "lou": "Lou rakiplerini dondurur. Süper özelliği kaygan bir alan oluşturur.",
+        "amber": "Amber ateş fırlatır. Süper özelliği yanan bir sıvı fırlatır.",
+        "colette": "Colette kalp fırlatır. Süper özelliğiyle rakiplerini sürükleyip geri döner.",
+        "surge": "Surge meyve suyu fırlatır. Süper özelliğiyle seviye atlar.",
+        "sprout": "Sprout bitki fırlatır. Süper özelliği bitki duvarı oluşturur.",
+        "nanı": "Nani bölünen ışın fırlatır. Süper özelliği bir araçla rakipleri patlatır."
+    };
+
+    async function init() {
+        const r = await fetch('https://api.brawlapi.com/v1/brawlers
+<html lang="tr">
+<head>
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brawl Stars: Sirius ve Karakterler</title>

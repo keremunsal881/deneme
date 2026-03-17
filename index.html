@@ -3,114 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Stars: Sirius ve Tüm Savaşçılar</title>
+    <title>Brawl Stars: Sirius ve Karakterler</title>
     <style>
-        :root {
-            --sirius-gold: #FFD700;
-            --bg-dark: #0a0a0a;
-            --card-bg: #1a1a1a;
-        }
+        :root { --gold: #FFD700; --bg: #111; --card: #1e1e1e; }
+        body { font-family: 'Arial Black', sans-serif; background-color: #000; color: white; margin: 0; text-align: center; }
+        header { padding: 30px; border-bottom: 3px solid var(--gold); background: #1a1a1a; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 15px; padding: 15px; border: 2px solid #333; cursor: pointer; transition: 0.3s; }
+        .card:hover { transform: scale(1.05); border-color: var(--gold); }
+        .card img { width: 100%; border-radius: 10px; aspect-ratio: 1/1; object-fit: cover; }
+        .name { margin-top: 10px; font-size: 0.9em; text-transform: uppercase; color: var(--gold); }
 
-        body {
-            font-family: 'Arial Black', sans-serif;
-            background-color: var(--bg-dark);
-            color: white;
-            margin: 0;
-            text-align: center;
-        }
-
-        header {
-            background: linear-gradient(180deg, #222 0%, #000 100%);
-            padding: 40px;
-            border-bottom: 3px solid var(--sirius-gold);
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
-            padding: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .brawler-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 15px;
-            border: 2px solid #333;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-        }
-
-        .brawler-card:hover {
-            transform: scale(1.05);
-            border-color: var(--sirius-gold);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .brawler-card img {
-            width: 100%;
-            border-radius: 15px;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-        }
-
-        .name { margin-top: 10px; font-size: 1em; text-transform: uppercase; color: #fff; }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .modal-content {
-            background: #222;
-            padding: 30px;
-            border-radius: 30px;
-            max-width: 500px;
-            width: 90%;
-            border: 3px solid var(--sirius-gold);
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px; right: 20px;
-            font-size: 35px;
-            cursor: pointer;
-            color: #ff4444;
-        }
-
-        #modalDesc { line-height: 1.6; color: #ddd; font-family: sans-serif; font-size: 1.1em; }
+        /* MODAL (TIKLAYINCA AÇILAN PENCERE) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #1a1a1a; padding: 30px; border-radius: 25px; max-width: 450px; width: 85%; border: 3px solid var(--gold); position: relative; }
+        .close { position: absolute; top: 10px; right: 20px; font-size: 30px; cursor: pointer; color: #ff4444; }
+        .modal-img { width: 150px; height: 150px; border-radius: 20px; border: 3px solid var(--gold); margin-bottom: 20px; }
+        .modal-text { font-family: 'Segoe UI', sans-serif; line-height: 1.6; font-size: 1.1em; color: #eee; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>BRAWL STARS ARŞİVİ</h1>
-</header>
+<header><h1>BRAWL STARS GALERİSİ</h1></header>
+<div class="container" id="box"></div>
 
-<div class="container" id="brawlerContainer"></div>
-
-<div id="brawlerModal" class="modal">
+<div id="m" class="modal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <img id="modalImg" src="" style="width:180px; border-radius:20px; margin-bottom:20px; border:2px solid var(--sirius-gold);">
-        <h2 id="modalName" style="color:var(--sirius-gold); margin-bottom:10px;"></h2>
-        <p id="modalDesc"></p>
+        <span class="close" onclick="closeM()">&times;</span>
+        <img id="mImg" class="modal-img" src="">
+        <h2 id="mName" style="color:var(--gold); text-transform:uppercase; margin-bottom:15px;"></h2>
+        <p id="mDesc" class="modal-text"></p>
     </div>
 </div>
 
 <script>
-    // TÜM ÖZEL AÇIKLAMALARIN (SIRIUS'TAN NANI'YE)
-    const descriptions = {
+    // SENİN YAZDIĞIN ÖZEL AÇIKLAMALAR
+    const data = {
         "Sirius": "Sirius karakteri süper özelliğiyle gölge çıkartır normal saldırısı ise hem havadan hem karadan kullanılabilir.",
         "Glowbert": "Glowbert normal saldırısını yaptığında düşmanına bir ışın atar bu ışın düşman bir duvarın arkasına geçmediği sürece hasar vermeye devam eder. Süper özelliği onu ileri atar ve can verir.",
         "Gıgı": "Gıgı düşmanlarına dönerek hasar verir. Süper saldırısıyla herhangi bir yere ışınlanabilir.",
@@ -149,80 +77,11 @@
         "R-T": "R-T rakiplerine bir ışın fırlatır. Süper özelliğiyle ikiye bölünür ve bir daire içine hasar verir.",
         "Mandy": "Mandy rakiplerine şeker demeti fırlatır. Süper özelliğiyle bir şeker ışını yapar bu ışın duvarlardan geçer ve tüm haritayı geçer.",
         "Gray": "Gray rakiplerine bir ışın fırlatır. Süper özelliği ile iki yerde delik açar ve bu delikler sayesinde ışınlanabilir.",
-        "Chester": "Chester rakiplerine her vuruşta bir tane artacak şekilde şeker gönderir. Süper özelliğiyle çeşit çeşit yetenekler kullanabilir.",
+        "Chester": "Chester rakiplerine her vuruşta bir tane artcak şekilde şeker gönderir. Süper özelliğiyle çeşit çeşit yetenekler kullanabilir.",
         "Buster": "Buster rakiplerine bir film rulosu atar. Süper özelliği saldırıları yansıtan bir set çeker.",
         "Gus": "Gus rakiplerine bir balon fırlatır. Süper özelliğiyle bir köpek balonu fırlatır ve kalkan kazanır.",
         "Sam": "Sam rakiplerine pençeler. Süper özelliğiyle pençesini fırlatır.",
         "Otis": "Otis rakiplerine boya atar. Süper saldırısı rakiplerinin mermi atmasını engeller.",
         "Bonnie": "Bonnie topunun içinde rakiplerine gülle fırlatır. Süper özelliği basıldığında toptan atlar.",
         "Janet": "Janet rakiplerine menzili uzayan bir parıltı gönderir. Süper özelliği onu havaya uçurur.",
-        "Eve": "Eve rakiplerine yumurta fırlatır ve su üstünde ilerleyebilir. Süper özelliği larva bırakır.",
-        "Fang": "Fang rakiplerine tekme atar. Süper saldırısıyla rakiplerine seri bir tekme atıp seker.",
-        "Lola": "Lola rakiplerine yıldız fırlatır. Süper özelliğiyle kendi kopyasını çıkartır.",
-        "Meg": "Meg bir robotun içinde başlar. Robot patladığında içinden çıkar.",
-        "Ash": "Ash rakiplerine süpürgeyle vurur. Süper özelliği minik arkadaşlarını çağırır.",
-        "Griff": "Griff para fırlatır. Süper özelliğiyle geri dönen kartlar fırlatır.",
-        "Buzz": "Buzz rakiplerine yarım daire şeklinde saldırır. Süper özelliğiyle rakiplerine sörf tahtası atar ve onları sersemletir.",
-        "Grom": "Grom artı şeklinde bölünen bir balon fırlatır. Süper özelliğiyle daha büyük bir balon atar.",
-        "Squeak": "Squeak yapışan bir sıvı atar. Süper özelliğiyle parçalara ayrılan bir sıvı atar.",
-        "Belle": "Belle elektrik dalgası atar. Süper özelliğiyle bir rakibi işaretler.",
-        "Stu": "Stu parlayan ışın gönderir. Süper özelliğiyle ileri atılır ve yerleri yakar.",
-        "Ruffs": "Ruffs seken mermiler atar. Süper özelliği güç veren bir kit düşürür.",
-        "Edgar": "Edgar atkısıyla yumruk atar. Süper özelliğiyle rakiplerine atlar.",
-        "Byron": "Byron zehirler veya takım arkadaşına can verir. Süper özelliği iksir şişesi fırlatır.",
-        "Lou": "Lou rakiplerini dondurur. Süper özelliği kaygan bir alan oluşturur.",
-        "Amber": "Amber ateş fırlatır. Süper özelliği yanan bir sıvı fırlatır.",
-        "Colette": "Colette kalp fırlatır. Süper özelliğiyle rakiplerini sürükleyip geri döner.",
-        "Surge": "Surge meyve suyu fırlatır. Süper özelliğiyle seviye atlar.",
-        "Sprout": "Sprout bitki fırlatır. Süper özelliği bitki duvarı oluşturur.",
-        "Nani": "Nani bölünen ışın fırlatır. Süper özelliği bir araçla rakipleri patlatır."
-    };
-
-    async function loadBrawlers() {
-        try {
-            const response = await fetch('https://api.brawlapi.com/v1/brawlers');
-            const data = await response.json();
-            const container = document.getElementById('brawlerContainer');
-
-            // 1. SIRIUS (Senin Görselinle)
-            addCard({ name: "Sirius", imageUrl: "sirius.jpeg" }, container);
-
-            // 2. DİĞERLERİ (Buzz Lightyear KESİN SİLİNDİ)
-            data.list.forEach(b => {
-                const name = b.name.toLowerCase();
-                // "buzz lightyear" ismini gördüğü an bu karakteri geçer, listeye eklemez.
-                if (name !== "buzz lightyear") {
-                    addCard(b, container);
-                }
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    function addCard(b, container) {
-        const card = document.createElement('div');
-        card.className = 'brawler-card';
-        if(b.name === "Sirius") card.style.borderColor = "var(--sirius-gold)";
-        
-        card.onclick = () => {
-            const desc = descriptions[b.name] || b.name + " savaş alanına hükmetmek için burada!";
-            showDetails(b.name, desc, b.imageUrl);
-        };
-
-        card.innerHTML = `<img src="${b.imageUrl}" onerror="this.src='https://placehold.co/200?text=Resim+Yok'"><div class="name">${b.name}</div>`;
-        container.appendChild(card);
-    }
-
-    function showDetails(name, desc, img) {
-        document.getElementById('modalName').innerText = name;
-        document.getElementById('modalDesc').innerText = desc;
-        document.getElementById('modalImg').src = img;
-        document.getElementById('brawlerModal').style.display = 'flex';
-    }
-
-    function closeModal() { document.getElementById('brawlerModal').style.display = 'none'; }
-    window.onclick = (e) => { if(e.target.className == 'modal') closeModal(); }
-
-    loadBrawlers();
-</script>
-</body>
-</html>
+        "Eve": "Eve rakiplerine yumurta fırlatır ve su üstünde ilerleyebilir. Süper özelliği
